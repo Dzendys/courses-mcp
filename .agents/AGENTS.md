@@ -82,4 +82,3 @@ Always determine the query target before calling any tools or resources:
 - **Smart Caching Policy:** Check for existing offline Markdown files using `read_saved_file` (or path validation) before performing live scrapes. Do not repeat network requests for already saved materials.
 - **Automatic Continuation:** If a tool/resource output links to other directories or pages of interest, proceed with the relevant calls immediately without asking for user permission at each step.
 
-
