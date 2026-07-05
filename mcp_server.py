@@ -8,29 +8,22 @@ from dotenv import load_dotenv, set_key
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from mcp.server.fastmcp import FastMCP
-from courses_client import CoursesClient
+from courses_mcp import CoursesClient, CoursesConfig
 
 # Initialize FastMCP server
 mcp = FastMCP("Courses.FIT.CVUT.cz Server")
 
 def get_client(cookies: str = "") -> CoursesClient:
     """Helper to initialize CoursesClient from env or parameter cookies."""
-    # Always check/load current env
-    load_dotenv()
-    
-    env_cookies = os.getenv("COURSES_COOKIES", "")
-    username = os.getenv("COURSES_USERNAME", "")
-    password = os.getenv("COURSES_PASSWORD", "")
+    config = CoursesConfig.from_env()
     
     # Priority: 1. Passed parameter, 2. Env variable
-    active_cookies = cookies if cookies else env_cookies
-    
-    client = CoursesClient(
-        cookies_str=active_cookies,
-        username=username,
-        password=password
-    )
+    if cookies:
+        config.cookies_str = cookies
+        
+    client = CoursesClient(config)
     return client
+
 
 @mcp.tool()
 def login(username: str, password: str) -> str:
@@ -43,7 +36,8 @@ def login(username: str, password: str) -> str:
         username: CTU username (e.g. 'matejj50').
         password: CTU main password.
     """
-    client = CoursesClient(username=username, password=password)
+    config = CoursesConfig(username=username, password=password)
+    client = CoursesClient(config)
     success, msg = client.login()
     
     if success:
