@@ -209,10 +209,12 @@ def get_course_index_resource(course_code: str) -> str:
     """Exposes the navigation menu/sidebar for a subject."""
     return get_course_index(course_code)
 
-@mcp.resource("courses://{course_code}/pages/{page_path*}")
+@mcp.resource("courses://{course_code}/pages/{page_path}")
 def get_page_content_resource(course_code: str, page_path: str) -> str:
     """Exposes the main section of a specific course subpage in Markdown."""
-    return get_page_content(course_code, page_path)
+    import urllib.parse
+    decoded_path = urllib.parse.unquote(page_path)
+    return get_page_content(course_code, decoded_path)
 
 if __name__ == "__main__":
     mcp.run()
