@@ -178,5 +178,21 @@ def search_course_content(course_code: str, query: str, cookies: Optional[str] =
     except Exception as e:
         return f"Error searching course content: {str(e)}"
 
+@mcp.resource("courses://list")
+def list_courses_resource() -> str:
+    """Exposes the list of subjects/courses."""
+    return list_courses()
+
+@mcp.resource("courses://{course_code}/index")
+def get_course_index_resource(course_code: str) -> str:
+    """Exposes the navigation menu/sidebar for a subject."""
+    return get_course_index(course_code)
+
+@mcp.resource("courses://{course_code}/pages/{page_path*}")
+def get_page_content_resource(course_code: str, page_path: str) -> str:
+    """Exposes the main section of a specific course subpage in Markdown."""
+    return get_page_content(course_code, page_path)
+
 if __name__ == "__main__":
     mcp.run()
+
