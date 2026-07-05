@@ -1,12 +1,12 @@
 # Antigravity Rules - Course Portals & Wiki Integration
 
-You have access to two specialized Model Context Protocol (MCP) servers: `courses` (for the official FIT ČVUT course portal at `courses.fit.cvut.cz`) and `fitwiki` (for the student-run community wiki at `fit-wiki.cz`). When researching course materials, follow this comprehensive prioritization, workflow, and execution guide.
+You have access to two specialized Model Context Protocol (MCP) servers: `courses` and `fitwiki`. When researching course materials, follow this comprehensive prioritization, workflow, and execution guide.
 
 ---
 
 ## 1. Portal Prioritization Matrix
 
-Always determine the query target before calling any tools:
+Always determine the query target before calling any tools or resources:
 
 | Content Type | Primary Server | Secondary Server / Backup |
 | :--- | :--- | :--- |
@@ -18,7 +18,10 @@ Always determine the query target before calling any tools:
 
 ---
 
-## 2. Official Portal (`courses`) Tool Reference & Workflows
+## 2. Official Portal (`courses`) - Official Source
+
+### Role & Purpose:
+`courses` (querying `courses.fit.cvut.cz`) is the **official source** for all course-related information. It contains authoritative details regarding course requirements, lecture slides, official laboratory sheets, grading/classification criteria, announcements, and structural syllabus.
 
 ### Available Tools:
 1. `list_courses(cookies)`: Lists subjects/courses available at FIT CTU. Highlights current enrollment when authenticated.
@@ -26,6 +29,11 @@ Always determine the query target before calling any tools:
 3. `get_page_content(course_code, page_path)`: Fetches a specific course subpage and returns its main body as clean Markdown.
 4. `search_course_content(course_code, query)`: Searches all subpages of a course for keyword query using local caches.
 5. `login(username, password)`: Performs OAuth handshake, logs in, and persists retrieved cookies in the local `.env` file.
+
+### Available Resources:
+- `courses://list`: Lists all subjects.
+- `courses://{course_code}/index`: Exposes the navigation menu/sidebar for a subject.
+- `courses://{course_code}/pages/{page_path*}`: Exposes the content of a specific course subpage.
 
 ### Common Workflow Chaining:
 - **Retrieve Specific Page Content:**
@@ -37,7 +45,10 @@ Always determine the query target before calling any tools:
 
 ---
 
-## 3. Student Wiki (`fitwiki`) Tool Reference & Workflows
+## 3. Student Wiki (`fitwiki`) - Student-Run Portal
+
+### Role & Purpose:
+`fitwiki` (querying `fit-wiki.cz`) is a **student-run community wiki** used for sharing unofficial study materials, past exam variants (exam papers/tasks from previous years), student-written solutions, homework assignments, study guides, and community tips.
 
 ### Available Tools:
 1. `list_courses(cookies)`: Lists all FIT ČVUT subjects documented on the student wiki.
@@ -51,6 +62,12 @@ Always determine the query target before calling any tools:
 9. `compile_pdf(markdown_path, pdf_path)`: Compiles an offline Markdown file into a PDF.
 10. `compile_category_pdfs(category)`: Compiles all scraped pages in a category folder to PDFs in batch.
 
+### Available Resources:
+- `fitwiki://list`: Lists all subjects on the wiki.
+- `fitwiki://{course_code}/sections`: Exposes sections for a course.
+- `fitwiki://{course_code}/sections/{section}`: Lists pages in a specific section.
+- `fitwiki://{course_code}/sections/{section}/{slug}`: Exposes the contents of a saved/cached page.
+
 ### Common Workflow Chaining:
 - **Discovering & Scraping Exam Materials:**
   `list_courses()` $\rightarrow$ `list_course_sections(course_code)` $\rightarrow$ `list_section_pages(course_code, "zkouska")` $\rightarrow$ Check if local path exists $\rightarrow$ If cached, `read_saved_file(path)` $\rightarrow$ If not cached, `scrape_page(url, "zkouska", title)`.
@@ -61,7 +78,7 @@ Always determine the query target before calling any tools:
 
 ## 4. Execution Rules
 
-- **Silent Operations:** Run all tool invocations silently. Do NOT explain what tools you are using, why you are calling them, or describe their parameters to the user prior to execution.
+- **Silent Operations:** Run all tool and resource actions silently. Do NOT explain what tools/resources you are using, why you are calling them, or describe their parameters to the user prior to execution.
 - **Smart Caching Policy:** Check for existing offline Markdown files using `read_saved_file` (or path validation) before performing live scrapes. Do not repeat network requests for already saved materials.
-- **Automatic Continuation:** If a tool output links to other directories or pages of interest, proceed with the relevant tools immediately without asking for user permission at each step.
+- **Automatic Continuation:** If a tool/resource output links to other directories or pages of interest, proceed with the relevant calls immediately without asking for user permission at each step.
 
