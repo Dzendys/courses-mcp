@@ -62,9 +62,9 @@ Add this configuration to your local MCP client settings (e.g. `mcp_config.json`
 ```json
 {
   "mcpServers": {
-    "courses-mcp": {
-      "command": "/home/dzendys_/Downloads/courses-mcp/venv/bin/python",
-      "args": ["/home/dzendys_/Downloads/courses-mcp/mcp_server.py"]
+    "courses": {
+      "command": "/home/dzendys_/Downloads/courses/venv/bin/python",
+      "args": ["/home/dzendys_/Downloads/courses/mcp_server.py"]
     }
   }
 }

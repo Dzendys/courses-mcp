@@ -11,7 +11,7 @@ from mcp.server.fastmcp import FastMCP
 from courses_mcp import CoursesClient, CoursesConfig
 
 # Initialize FastMCP server
-mcp = FastMCP("Courses.FIT.CVUT.cz Server")
+mcp = FastMCP("courses")
 
 def get_client(cookies: str = "") -> CoursesClient:
     """Helper to initialize CoursesClient from env or parameter cookies."""
