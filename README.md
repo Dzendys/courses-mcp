@@ -51,6 +51,17 @@ The server exposes the following tools:
 - `get_course_index(course_code)`: Retrieves all available subpages (paths and titles) from the sidebar menu of a course.
 - `get_page_content(course_code, page_path)`: Fetches a specific course subpage and returns its main section in Markdown format.
 - `search_course_content(course_code, query)`: Scrapes (or reads from cache) all pages of a course and returns matching search snippets.
+- `download_course_file(course_code, file_path, cookies)`: Downloads any linked slide (PDF), code, or file from the course portal.
+
+---
+
+## Exposed MCP Resources
+
+The server exposes the following read-only resources:
+
+- `courses://list`: Returns the list of subjects/courses.
+- `courses://{course_code}/index`: Returns the navigation index sidebar of a subject.
+- `courses://{course_code}/pages/{page_path}`: Returns the content of a specific course subpage in Markdown. *(Note: For nested paths, URL-encode the slashes as `%2F`, e.g., `lectures%2Findex.html`)*
 
 
 ---
