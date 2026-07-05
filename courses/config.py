@@ -20,7 +20,11 @@ class CoursesConfig:
         self.username = username
         self.password = password
         self.base_url = base_url.rstrip("/")
-        self.cache_dir = cache_dir
+        
+        # Determine the project root absolute path
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        self.cache_dir = cache_dir if os.path.isabs(cache_dir) else os.path.join(project_root, cache_dir)
+        
         self.headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
