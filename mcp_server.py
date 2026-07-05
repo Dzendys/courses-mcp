@@ -8,7 +8,7 @@ from dotenv import load_dotenv, set_key
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from mcp.server.fastmcp import FastMCP
-from courses_mcp import CoursesClient, CoursesConfig
+from courses import CoursesClient, CoursesConfig
 
 # Initialize FastMCP server
 mcp = FastMCP("courses")
