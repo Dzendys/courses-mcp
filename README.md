@@ -1,6 +1,6 @@
 # Courses.FIT.CVUT.cz MCP Server
 
-An MCP (Model Context Protocol) server designed for the Faculty of Information Technology, Czech Technical University (FIT CTU) course materials site: `courses.fit.cvut.cz`. 
+An MCP (Model Context Protocol) server designed for the Faculty of Information Technology, Czech Technical University (FIT CTU) course materials site: courses.fit.cvut.cz. 
 
 It enables LLMs (such as Cline, Cursor, or Open WebUI) to list subjects, navigate their subpages (lectures, labs, exams), read materials converted to clean Markdown, and perform quick keyword searches across subjects.
 
@@ -8,11 +8,11 @@ It enables LLMs (such as Cline, Cursor, or Open WebUI) to list subjects, navigat
 
 ## Features
 
-- 🔑 **Dual Authentication:** Supports logging in using pre-fetched browser session cookies or CTU credentials (username & password) with automatic cookie persistence.
-- 🎓 **Enrolled Semester Courses:** Detects and lists subjects currently enrolled by the student.
-- 📂 **Static Site Navigation:** Crawls and resolves the navigation sidebar (PagesFIT/MkDocs) of any course.
-- 📝 **Clean Markdown:** Isolates primary content sections (e.g. `<main>`, `<article>`) and converts them to readable, clean Markdown.
-- 🔍 **Indexed Keyword Search:** Iterates through course pages and searches for keywords, with local caching to speed up consecutive searches.
+- **Dual Authentication:** Supports logging in using pre-fetched browser session cookies or CTU credentials (username and password) with automatic cookie persistence.
+- **Enrolled Semester Courses:** Detects and lists subjects currently enrolled by the student.
+- **Static Site Navigation:** Crawls and resolves the navigation sidebar (PagesFIT/MkDocs) of any course.
+- **Clean Markdown:** Isolates primary content sections (e.g. `<main>`, `<article>`) and converts them to readable, clean Markdown.
+- **Indexed Keyword Search:** Iterates through course pages and searches for keywords, with local caching to speed up consecutive searches.
 
 ---
 
@@ -33,10 +33,10 @@ Duplicate the `.env.example` file to `.env` and set up your preferred authentica
 
 ```env
 # OPTION 1: Set session cookies directly (Recommended if you use MFA)
-COURSES_COOKIES="oauth_access_token=...; oauth_refresh_token=...; oauth_username=matejj50"
+COURSES_COOKIES="oauth_access_token=...; oauth_refresh_token=...; oauth_username=your-username"
 
 # OPTION 2: Set credentials for automatic OAuth login handshake
-COURSES_USERNAME="matejj50"
+COURSES_USERNAME="your-username"
 COURSES_PASSWORD="your-ctu-password"
 ```
 
@@ -51,6 +51,7 @@ The server exposes the following tools:
 - `get_course_index(course_code)`: Retrieves all available subpages (paths and titles) from the sidebar menu of a course.
 - `get_page_content(course_code, page_path)`: Fetches a specific course subpage and returns its main section in Markdown format.
 - `search_course_content(course_code, query)`: Scrapes (or reads from cache) all pages of a course and returns matching search snippets.
+
 
 ---
 

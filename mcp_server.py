@@ -33,7 +33,7 @@ def login(username: str, password: str) -> str:
     will remain authenticated automatically.
     
     Args:
-        username: CTU username (e.g. 'matejj50').
+        username: CTU username (e.g. 'username').
         password: CTU main password.
     """
     config = CoursesConfig(username=username, password=password)
