@@ -178,6 +178,27 @@ def search_course_content(course_code: str, query: str, cookies: Optional[str] =
     except Exception as e:
         return f"Error searching course content: {str(e)}"
 
+@mcp.tool()
+def download_course_file(course_code: str, file_path: str, cookies: Optional[str] = "") -> str:
+    """
+    Downloads any file (PDF slides, ZIP archives, scripts) linked on the official course pages
+    using the current authenticated session, saving it to the local project directory.
+    
+    Args:
+        course_code: Code of the course (e.g. 'BI-OSY').
+        file_path: Relative path of the file to download (e.g. 'lectures/01-intro.pdf' or 'labs/01-setup.zip').
+        cookies: Optional session cookies override.
+    """
+    client = get_client(cookies)
+    try:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        save_path = os.path.join(base_dir, "downloads", course_code.upper(), file_path)
+        actual_path = client.download_file(course_code, file_path, save_path)
+        rel_path = os.path.relpath(actual_path, base_dir)
+        return f"Success! File downloaded and saved to: {rel_path} (absolute: {actual_path})"
+    except Exception as e:
+        return f"Error downloading file: {str(e)}"
+
 @mcp.resource("courses://list")
 def list_courses_resource() -> str:
     """Exposes the list of subjects/courses."""

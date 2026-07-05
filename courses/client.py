@@ -295,3 +295,24 @@ class CoursesClient:
                 })
                 
         return matches
+
+    def download_file(self, course_code: str, file_path: str, save_path: str) -> str:
+        """
+        Downloads a binary or text file from the courses server.
+        """
+        course_code = course_code.strip().upper().split(".")[0]
+        file_path = file_path.strip().lstrip("/")
+        
+        url = f"{self.config.base_url}/{course_code}/{file_path}"
+        r = self.session.get(url, stream=True)
+        
+        if r.status_code != 200:
+            raise Exception(f"Failed to fetch file {file_path} for course {course_code} (HTTP {r.status_code})")
+            
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        with open(save_path, "wb") as f:
+            for chunk in r.iter_content(chunk_size=8192):
+                f.write(chunk)
+                
+        return save_path
+
