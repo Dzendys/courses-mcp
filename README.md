@@ -1,4 +1,4 @@
-# Courses.FIT.CVUT.cz MCP Server
+# Courses MCP Server
 
 An MCP (Model Context Protocol) server designed for the Faculty of Information Technology, Czech Technical University (FIT CTU) course materials site: courses.fit.cvut.cz. 
 
