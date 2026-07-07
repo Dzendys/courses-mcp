@@ -1,8 +1,8 @@
 # Courses MCP Server
 
-An MCP (Model Context Protocol) server designed for the Faculty of Information Technology, Czech Technical University (FIT CTU) course materials site: courses.fit.cvut.cz. 
+An MCP (Model Context Protocol) server designed for the Faculty of Information Technology, Czech Technical University (FIT CTU) course materials site: courses.fit.cvut.cz.
 
-It enables LLMs (such as Cline, Cursor, or Open WebUI) to list subjects, navigate their subpages (lectures, labs, exams), read materials converted to clean Markdown, and perform quick keyword searches across subjects.
+It enables LLMs (such as Claude, AGY, or Open WebUI) to list subjects, navigate their subpages (lectures, labs, exams), read materials converted to clean Markdown, and perform quick keyword searches across subjects.
 
 ---
 
@@ -33,25 +33,60 @@ Duplicate the `.env.example` file to `.env` and set up your preferred authentica
 
 ```env
 # OPTION 1: Set session cookies directly (Recommended if you use MFA)
-COURSES_COOKIES="oauth_access_token=...; oauth_refresh_token=...; oauth_username=your-username"
+COURSES_COOKIES="oauth_access_token=YOUR_ACCESS_TOKEN; oauth_refresh_token=YOUR_REFRESH_TOKEN; oauth_username=YOUR_USERNAME"
 
 # OPTION 2: Set credentials for automatic OAuth login handshake
-COURSES_USERNAME="your-username"
-COURSES_PASSWORD="your-ctu-password"
+COURSES_USERNAME="YOUR_CTU_USERNAME"
+COURSES_PASSWORD="YOUR_CTU_PASSWORD"
 ```
 
 ---
 
-## Registered MCP Tools
+## MCP Server Setup
 
-The server exposes the following tools:
+The MCP server exposes Fit-Courses tools to LLM clients. It runs via stdio or streamable-http.
 
-- `login(username, password)`: Performs CTU login, updates session cookies, and writes the retrieved cookies to the `.env` file for automatic persistent logins.
-- `list_courses(cookies)`: Lists subjects taught at FIT. If authenticated, separates your current semester courses from all other catalog subjects.
-- `get_course_index(course_code)`: Retrieves all available subpages (paths and titles) from the sidebar menu of a course.
-- `get_page_content(course_code, page_path)`: Fetches a specific course subpage and returns its main section in Markdown format.
-- `search_course_content(course_code, query)`: Scrapes (or reads from cache) all pages of a course and returns matching search snippets.
-- `download_course_file(course_code, file_path, cookies)`: Downloads any linked slide (PDF), code, or file from the course portal.
+### Client Configuration
+
+Add the following to your client's MCP configuration file. Cookies are loaded from the `.env` file (see [`.env.example`](.env.example)).
+
+```json
+{
+  "mcpServers": {
+    "courses": {
+      "command": "/path/to/courses/venv/bin/python",
+      "args": ["/path/to/courses/mcp_server.py"]
+    }
+  }
+}
+```
+
+### Config File Locations
+
+| Client | Path |
+|---|---|
+| Claude Desktop | `~/.config/Claude/claude_desktop_config.json` |
+| AGY (CLI) | `~/.gemini/antigravity-cli/mcp_config.json` |
+| AGY (IDE / 2.0) | `~/.gemini/config/mcp_config.json` |
+| OpenCode | `.opencode.json` in the workspace root |
+
+Restart the client after saving.
+
+### Transports
+
+- **stdio** (default) – the client spawns the server as a subprocess. Use for Claude Desktop, AGY, OpenCode.
+- **streamable-http** – for Docker or remote setups. Set `MCP_TRANSPORT=streamable-http` and point the client to `http://host:8000/mcp`.
+
+---
+
+## Exposed MCP Tools
+
+- `login` – Performs CTU login, updates session cookies, and writes the retrieved cookies to the `.env` file for automatic persistent logins.
+- `list_courses` – Lists subjects taught at FIT. If authenticated, separates your current semester courses from all other catalog subjects.
+- `get_course_index` – Retrieves all available subpages (paths and titles) from the sidebar menu of a course.
+- `get_page_content` – Fetches a specific course subpage and returns its main section in Markdown format.
+- `search_course_content` – Scrapes (or reads from cache) all pages of a course and returns matching search snippets.
+- `download_course_file` – Downloads any linked slide (PDF), code, or file from the course portal.
 
 ---
 
@@ -59,30 +94,6 @@ The server exposes the following tools:
 
 The server exposes the following read-only resources:
 
-- `courses://list`: Returns the list of subjects/courses.
-- `courses://{course_code}/index`: Returns the navigation index sidebar of a subject.
-- `courses://{course_code}/pages/{page_path}`: Returns the content of a specific course subpage in Markdown. *(Note: For nested paths, URL-encode the slashes as `%2F`, e.g., `lectures%2Findex.html`)*
-
-
----
-
-## Global MCP Integration
-
-Add this configuration to your local MCP client settings (e.g. `mcp_config.json`):
-
-```json
-{
-  "mcpServers": {
-    "courses": {
-      "command": "/home/dzendys_/Downloads/courses/venv/bin/python",
-      "args": ["/home/dzendys_/Downloads/courses/mcp_server.py"]
-    }
-  }
-}
-```
-
----
-
-## License
-
-Created for educational and utility purposes for students and teachers of FIT ČVUT.
+- `courses://list` – Returns the list of subjects/courses.
+- `courses://{course_code}/index` – Returns the navigation index sidebar of a subject.
+- `courses://{course_code}/pages/{page_path}` – Returns the content of a specific course subpage in Markdown. *(Note: For nested paths, URL-encode the slashes as `%2F`, e.g., `lectures%2Findex.html`)*
