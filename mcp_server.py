@@ -26,51 +26,28 @@ def get_client(cookies: str = "") -> CoursesClient:
 
 
 @mcp.tool()
-def login(username: str, password: str) -> str:
+def login() -> str:
     """
-    Performs CTU OAuth login handshake using credentials.
+    Performs CTU OAuth login handshake using credentials from the local .env file.
     Saves the retrieved cookies back to the local .env file so future calls
     will remain authenticated automatically.
-    
-    Args:
-        username: CTU username (e.g. 'username').
-        password: CTU main password.
     """
-    config = CoursesConfig(username=username, password=password)
-    client = CoursesClient(config)
-    success, msg = client.login()
+    client = get_client()
+    success, msg = client.login_and_save()
     
     if success:
-        # Construct cookie string to save in .env
-        cookies_dict = client.session.cookies.get_dict(domain="courses.fit.cvut.cz")
-        cookie_parts = []
-        for k, v in cookies_dict.items():
-            cookie_parts.append(f"{k}={v}")
-        cookie_str = "; ".join(cookie_parts)
-        
-        # Persist to .env file
-        env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
-        try:
-            set_key(env_path, "COURSES_COOKIES", cookie_str)
-            set_key(env_path, "COURSES_USERNAME", username)
-            # Do NOT store password in plain text if it was already used, or do if user configured it
-            return f"Success! {msg}\nSession cookies retrieved and saved to .env."
-        except Exception as e:
-            return f"Success! {msg}\nHowever, failed to write cookies to .env: {e}\nCookies: {cookie_str}"
+        return f"Success! {msg}\nSession cookies retrieved and saved to .env."
     else:
         return f"Login failed: {msg}"
 
 @mcp.tool()
-def list_courses(cookies: Optional[str] = "") -> str:
+def list_courses() -> str:
     """
     Lists subjects/courses available at FIT CTU.
-    If authenticated (via environment variables or parameter), highlights the courses
+    If authenticated (via environment variables), highlights the courses
     the user is currently enrolled in (studying or teaching).
-    
-    Args:
-        cookies: Optional session cookies override.
     """
-    client = get_client(cookies)
+    client = get_client()
     try:
         res = client.list_courses()
         
@@ -111,16 +88,15 @@ def list_courses(cookies: Optional[str] = "") -> str:
         return f"Error listing courses: {str(e)}"
 
 @mcp.tool()
-def get_course_index(course_code: str, cookies: Optional[str] = "") -> str:
+def get_course_index(course_code: str) -> str:
     """
     Fetches the home page of a subject and parses the navigation hierarchy/sidebar.
     Lists all available subpages (paths and titles) for this course.
     
     Args:
         course_code: Code of the course (e.g. 'BI-OSY', 'BI-PJV').
-        cookies: Optional session cookies override.
     """
-    client = get_client(cookies)
+    client = get_client()
     try:
         pages = client.get_course_index(course_code)
         if not pages:
@@ -135,7 +111,7 @@ def get_course_index(course_code: str, cookies: Optional[str] = "") -> str:
         return f"Error fetching index for course {course_code.upper()}: {str(e)}"
 
 @mcp.tool()
-def get_page_content(course_code: str, page_path: str, cookies: Optional[str] = "") -> str:
+def get_page_content(course_code: str, page_path: str) -> str:
     """
     Fetches a specific subpage of a course and returns the main section content
     converted into clean, readable Markdown.
@@ -143,9 +119,8 @@ def get_page_content(course_code: str, page_path: str, cookies: Optional[str] = 
     Args:
         course_code: Code of the course (e.g. 'BI-OSY').
         page_path: Relative path of the page (get this from get_course_index, e.g. 'lectures/index.html' or 'classification/index.html').
-        cookies: Optional session cookies override.
     """
-    client = get_client(cookies)
+    client = get_client()
     try:
         content = client.get_page_content(course_code, page_path)
         return content
@@ -153,7 +128,7 @@ def get_page_content(course_code: str, page_path: str, cookies: Optional[str] = 
         return f"Error reading page {page_path} in course {course_code.upper()}: {str(e)}"
 
 @mcp.tool()
-def search_course_content(course_code: str, query: str, cookies: Optional[str] = "") -> str:
+def search_course_content(course_code: str, query: str) -> str:
     """
     Searches the content of all pages in a specific course for the keyword query.
     Caches scraped pages locally to speed up subsequent search requests.
@@ -161,9 +136,8 @@ def search_course_content(course_code: str, query: str, cookies: Optional[str] =
     Args:
         course_code: Code of the course (e.g. 'BI-OSY').
         query: Keyword or phrase to search for.
-        cookies: Optional session cookies override.
     """
-    client = get_client(cookies)
+    client = get_client()
     try:
         matches = client.search_course_content(course_code, query)
         if not matches:
@@ -179,7 +153,7 @@ def search_course_content(course_code: str, query: str, cookies: Optional[str] =
         return f"Error searching course content: {str(e)}"
 
 @mcp.tool()
-def download_course_file(course_code: str, file_path: str, cookies: Optional[str] = "") -> str:
+def download_course_file(course_code: str, file_path: str) -> str:
     """
     Downloads any file (PDF slides, ZIP archives, scripts) linked on the official course pages
     using the current authenticated session, saving it to the local project directory.
@@ -187,9 +161,8 @@ def download_course_file(course_code: str, file_path: str, cookies: Optional[str
     Args:
         course_code: Code of the course (e.g. 'BI-OSY').
         file_path: Relative path of the file to download (e.g. 'lectures/01-intro.pdf' or 'labs/01-setup.zip').
-        cookies: Optional session cookies override.
     """
-    client = get_client(cookies)
+    client = get_client()
     try:
         base_dir = os.path.dirname(os.path.abspath(__file__))
         save_path = os.path.join(base_dir, "downloads", course_code.upper(), file_path)
