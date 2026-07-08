@@ -4,6 +4,7 @@ import urllib.parse
 import requests
 from bs4 import BeautifulSoup
 import markdownify
+from dotenv import set_key
 
 from .config import CoursesConfig
 
@@ -29,36 +30,104 @@ class CoursesClient:
         if token:
             self.session.headers.update({"Authorization": f"Bearer {token}"})
 
+    def login_and_save(self) -> tuple[bool, str]:
+        """
+        Performs programmatic OAuth login and, if successful,
+        saves the cookies to the .env file.
+        """
+        success, msg = self.login()
+        if success:
+            cookies_dict = self.session.cookies.get_dict(domain="courses.fit.cvut.cz")
+            cookie_parts = []
+            for k, v in cookies_dict.items():
+                cookie_parts.append(f"{k}={v}")
+            cookie_str = "; ".join(cookie_parts)
+            
+            project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            env_path = os.path.join(project_root, ".env")
+            try:
+                set_key(env_path, "COURSES_COOKIES", cookie_str)
+                self.config.cookies_str = cookie_str
+                os.environ["COURSES_COOKIES"] = cookie_str
+            except Exception as e:
+                print(f"Warning: failed to write cookies to .env: {e}")
+        return success, msg
+
+    def _is_unauthenticated(self, r: requests.Response) -> bool:
+        """Checks if the response indicates the session is unauthenticated."""
+        if r.status_code in (401, 403):
+            return True
+        if "auth.fit.cvut.cz" in r.url:
+            return True
+        return False
+
+    def _request(self, method: str, url: str, **kwargs) -> requests.Response:
+        """Wraps requests to automatically handle re-authentication and cookie renewal."""
+        is_retry = kwargs.pop("_is_retry", False)
+        r = self.session.request(method, url, **kwargs)
+        if not is_retry and self._is_unauthenticated(r):
+            success, msg = self.login_and_save()
+            if success:
+                r = self._request(method, url, _is_retry=True, **kwargs)
+        return r
+
+    def _get(self, url: str, **kwargs) -> requests.Response:
+        """Helper for GET requests with automatic re-authentication."""
+        return self._request("GET", url, **kwargs)
+
     def login(self) -> tuple[bool, str]:
         """Performs programmatic OAuth login using CTU credentials."""
-        username = self.config.username
-        password = self.config.password
-        
-        if not username or not password:
-            return False, "Username or password not provided in config."
-            
         try:
             # 1. Initialize the OAuth flow by requesting a course page
             init_url = f"{self.config.base_url}/BI-OSY/index.html"
             r1 = self.session.get(init_url, allow_redirects=True)
             
-            # 2. Check if we are already logged in
-            if "oauth_access_token" in self.session.cookies.get_dict(domain="courses.fit.cvut.cz"):
+            # Check if we are already logged in
+            is_logged_in = (
+                r1.status_code == 200 
+                and "oauth_access_token" in self.session.cookies.get_dict(domain="courses.fit.cvut.cz")
+                and "auth.fit.cvut.cz" not in r1.url
+            )
+            if is_logged_in:
                 token = self.session.cookies.get("oauth_access_token", domain="courses.fit.cvut.cz")
                 self.session.headers.update({"Authorization": f"Bearer {token}"})
                 return True, "Already authenticated."
-                
-            # 3. Post credentials to auth.fit.cvut.cz
+
+            # If not logged in, we clean up the invalid/expired oauth_access_token from cookies and headers
+            self.session.cookies.set("oauth_access_token", None, domain="courses.fit.cvut.cz")
+            self.session.headers.pop("Authorization", None)
+
+            # Try to initialize OAuth flow / trigger auto-refresh with clean session
+            r1 = self.session.get(init_url, allow_redirects=True)
+            
+            # Check if it automatically refreshed/authenticated (e.g. using oauth_refresh_token in cookies)
+            is_logged_in = (
+                r1.status_code == 200 
+                and "oauth_access_token" in self.session.cookies.get_dict(domain="courses.fit.cvut.cz")
+                and "auth.fit.cvut.cz" not in r1.url
+            )
+            if is_logged_in:
+                token = self.session.cookies.get("oauth_access_token", domain="courses.fit.cvut.cz")
+                self.session.headers.update({"Authorization": f"Bearer {token}"})
+                return True, "Successfully authenticated via refresh token."
+
+            # If still not logged in, we must perform the login using credentials
+            username = self.config.username
+            password = self.config.password
+            if not username or not password:
+                return False, "Not authenticated and credentials not provided in config."
+
+            # Post credentials to auth.fit.cvut.cz
+            # (r1 should have redirected us to auth portal, setting up JSESSIONID in the session)
             login_url = "https://auth.fit.cvut.cz/login.do"
             payload = {
                 "j_username": username,
                 "j_password": password
             }
             
-            # Follow redirects to complete the handshake
             r2 = self.session.post(login_url, data=payload, allow_redirects=True)
             
-            # 4. Check if authentication cookies are now set
+            # Check if authentication cookies are now set
             cookies = self.session.cookies.get_dict(domain="courses.fit.cvut.cz")
             if "oauth_access_token" in cookies:
                 token = cookies["oauth_access_token"]
@@ -75,7 +144,7 @@ class CoursesClient:
     def get_user_info(self) -> dict:
         """Fetches information about the currently logged in user."""
         try:
-            r = self.session.get(f"{self.config.base_url}/api/v2/users/me")
+            r = self._get(f"{self.config.base_url}/api/v2/users/me")
             if r.status_code == 200:
                 return r.json()
         except:
@@ -89,7 +158,7 @@ class CoursesClient:
         # Fetch all courses from global catalog
         courses_map = {}
         try:
-            r_all = self.session.get(f"{self.config.base_url}/data/courses-all.json")
+            r_all = self._get(f"{self.config.base_url}/data/courses-all.json")
             if r_all.status_code == 200:
                 courses_map = r_all.json().get("courses", {})
         except Exception as e:
@@ -99,7 +168,7 @@ class CoursesClient:
         user_courses = {"studying": [], "teaching": []}
         is_authenticated = False
         try:
-            r_me = self.session.get(f"{self.config.base_url}/api/v2/users/me/courses")
+            r_me = self._get(f"{self.config.base_url}/api/v2/users/me/courses")
             if r_me.status_code == 200:
                 user_courses = r_me.json()
                 is_authenticated = True
@@ -159,12 +228,12 @@ class CoursesClient:
         base_url = f"{self.config.base_url}/{course_code}/"
         index_url = base_url + "index.html"
         
-        r = self.session.get(index_url, allow_redirects=True)
+        r = self._get(index_url, allow_redirects=True)
         r.encoding = "utf-8"
         
         if r.status_code != 200:
             index_url = base_url
-            r = self.session.get(index_url, allow_redirects=True)
+            r = self._get(index_url, allow_redirects=True)
             r.encoding = "utf-8"
             
         if r.status_code != 200:
@@ -218,7 +287,7 @@ class CoursesClient:
         page_path = page_path.strip().lstrip("/")
         
         url = f"{self.config.base_url}/{course_code}/{page_path}"
-        r = self.session.get(url, allow_redirects=True)
+        r = self._get(url, allow_redirects=True)
         r.encoding = "utf-8"
         
         if r.status_code != 200:
@@ -304,7 +373,7 @@ class CoursesClient:
         file_path = file_path.strip().lstrip("/")
         
         url = f"{self.config.base_url}/{course_code}/{file_path}"
-        r = self.session.get(url, stream=True)
+        r = self._get(url, stream=True)
         
         if r.status_code != 200:
             raise Exception(f"Failed to fetch file {file_path} for course {course_code} (HTTP {r.status_code})")
