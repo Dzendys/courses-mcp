@@ -34,7 +34,9 @@ class CoursesConfig:
         """
         Loads configuration from environment variables (.env).
         """
-        load_dotenv(override=True)
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        env_path = os.path.join(project_root, ".env")
+        load_dotenv(env_path, override=True)
         cookies_str = os.getenv("COURSES_COOKIES", "")
         username = os.getenv("COURSES_USERNAME", "")
         password = os.getenv("COURSES_PASSWORD", "")
