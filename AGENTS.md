@@ -24,12 +24,12 @@ Always determine the query target before calling any tools or resources:
 `courses` (querying `courses.fit.cvut.cz`) is the **official source** for all course-related information. It contains authoritative details regarding course requirements, lecture slides, official laboratory sheets, grading/classification criteria, announcements, and structural syllabus.
 
 ### Available Tools:
-1. `list_courses(cookies)`: Lists subjects/courses available at FIT CTU. Highlights current enrollment when authenticated.
+1. `list_courses()`: Lists subjects/courses available at FIT CTU. Highlights current enrollment when authenticated.
 2. `get_course_index(course_code)`: Retrieves the course homepage sidebar navigation menu, returning paths and titles.
 3. `get_page_content(course_code, page_path)`: Fetches a specific course subpage and returns its main body as clean Markdown.
 4. `search_course_content(course_code, query)`: Searches all subpages of a course for keyword query using local caches.
-5. `login(username, password)`: Performs OAuth handshake, logs in, and persists retrieved cookies in the local `.env` file.
-6. `download_course_file(course_code, file_path, cookies)`: Downloads any linked slide (PDF), code, or file from the course portal.
+5. `login()`: Performs OAuth handshake, logs in using credentials from the local `.env` file, and persists retrieved cookies in the local `.env` file.
+6. `download_course_file(course_code, file_path)`: Downloads any linked slide (PDF), code, or file from the course portal.
 
 ### Available Resources:
 - `courses://list`: Lists all subjects.
@@ -44,7 +44,7 @@ Always determine the query target before calling any tools or resources:
 - **Search Subject Matter:**
   `search_course_content(course_code, query)` $\rightarrow$ examine matching snippets $\rightarrow$ `get_page_content(course_code, page_path)` for complete context.
 - **Handling Authentication Failures:**
-  If a call returns unauthenticated or missing content, locate `.env` settings or invoke `login(username, password)` to establish cookies.
+  If a call returns unauthenticated or missing content, invoke `login()` to re-establish cookies.
 
 ---
 
