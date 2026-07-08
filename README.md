@@ -8,7 +8,7 @@ It enables LLMs (such as Claude, AGY, or Open WebUI) to list subjects, navigate 
 
 ## Features
 
-- **Dual Authentication:** Supports logging in using pre-fetched browser session cookies or CTU credentials (username and password) with automatic cookie persistence.
+- **Dual Authentication:** Supports logging in using pre-fetched browser session cookies or CTU credentials (username and password) with fully automatic cookie status detection, renewal, and persistence.
 - **Enrolled Semester Courses:** Detects and lists subjects currently enrolled by the student.
 - **Static Site Navigation:** Crawls and resolves the navigation sidebar (PagesFIT/MkDocs) of any course.
 - **Clean Markdown:** Isolates primary content sections (e.g. `<main>`, `<article>`) and converts them to readable, clean Markdown.
@@ -81,12 +81,14 @@ Restart the client after saving.
 
 ## Exposed MCP Tools
 
-- `login` – Performs CTU login, updates session cookies, and writes the retrieved cookies to the `.env` file for automatic persistent logins.
+- `login` – Performs CTU login using credentials from the local `.env` file, and writes the retrieved cookies to the `.env` file for automatic persistent logins (parameterless).
 - `list_courses` – Lists subjects taught at FIT. If authenticated, separates your current semester courses from all other catalog subjects.
 - `get_course_index` – Retrieves all available subpages (paths and titles) from the sidebar menu of a course.
 - `get_page_content` – Fetches a specific course subpage and returns its main section in Markdown format.
 - `search_course_content` – Scrapes (or reads from cache) all pages of a course and returns matching search snippets.
 - `download_course_file` – Downloads any linked slide (PDF), code, or file from the course portal.
+
+*Note: None of the tools require passing session cookies manually; authentication status is detected on the fly and expired cookies are automatically renewed and persisted to the `.env` file.*
 
 ---
 
